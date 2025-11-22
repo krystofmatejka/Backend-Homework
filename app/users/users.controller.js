@@ -1,16 +1,20 @@
 const express = require('express');
 const router = express.Router();
+const { validateUser } = require('../utils/validation');
 
 // Get user
 router.get('/:userId', (req, res) => {
-  console.log(req.user);
   res.json({
     message: 'Get user',
+    requestedBy: { id: req.user.id, name: req.user.name },
     userId: req.params.userId,
     data: {
-      id: req.params.userId,
+      _id: req.params.userId,
       name: 'John Doe',
-      email: 'john@example.com'
+      email: 'john@example.com',
+      is_active: true,
+      created_at: new Date('2025-01-15T10:30:00Z'),
+      updated_at: new Date('2025-01-15T10:30:00Z')
     }
   });
 });
@@ -21,21 +25,49 @@ router.get('/', (req, res) => {
     message: 'Get users',
     requestedBy: { id: req.user.id, name: req.user.name },
     data: [
-      { id: '1', name: 'John Doe', email: 'john@example.com' },
-      { id: '2', name: 'Jane Smith', email: 'jane@example.com' }
+      {
+        _id: 'user1',
+        name: 'John Doe',
+        email: 'john@example.com',
+        is_active: true,
+        created_at: new Date('2025-01-10T08:00:00Z'),
+        updated_at: new Date('2025-01-10T08:00:00Z')
+      },
+      {
+        _id: 'user2',
+        name: 'Jane Smith',
+        email: 'jane@example.com',
+        is_active: true,
+        created_at: new Date('2025-01-12T14:20:00Z'),
+        updated_at: new Date('2025-01-12T14:20:00Z')
+      }
     ]
   });
 });
 
 // Create user
 router.post('/', (req, res) => {
-  res.json({
+  const { name, email, password } = req.body;
+
+  // Validate input
+  const validation = validateUser({ name, email, password });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      errors: validation.errors
+    });
+  }
+
+  const now = new Date();
+  res.status(201).json({
     message: 'Create user',
-    requestedBy: { id: req.user.id, name: req.user.name },
     data: {
-      id: '123',
-      name: 'New User',
-      email: 'newuser@example.com'
+      _id: 'newuser_' + Date.now(),
+      name,
+      email,
+      is_active: true,
+      created_at: now,
+      updated_at: now
     }
   });
 });

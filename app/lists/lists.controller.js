@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { validateList, validateItem, validateListUpdate, validateItemUpdate } = require('../utils/validation');
 
 // Get shopping list
 router.get('/:listId', (req, res) => {
@@ -8,14 +9,33 @@ router.get('/:listId', (req, res) => {
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      id: req.params.listId,
-      name: 'Grocery Shopping',
-      owner: 'user123',
-      members: ['user456'],
+      _id: req.params.listId,
+      title: 'Grocery Shopping',
+      owner_id: 'user123',
+      member_ids: ['user123', 'user456'],
       items: [
-        { id: 'item1', name: 'Milk', purchased: false },
-        { id: 'item2', name: 'Bread', purchased: true }
-      ]
+        {
+          _id: 'item1',
+          name: 'Milk',
+          quantity: 2,
+          purchased_at: null,
+          created_by_user_id: 'user123',
+          created_at: new Date('2025-11-20T10:00:00Z'),
+          updated_at: new Date('2025-11-20T10:00:00Z')
+        },
+        {
+          _id: 'item2',
+          name: 'Bread',
+          quantity: 1,
+          purchased_at: new Date('2025-11-21T15:30:00Z'),
+          created_by_user_id: 'user123',
+          created_at: new Date('2025-11-20T10:00:00Z'),
+          updated_at: new Date('2025-11-21T15:30:00Z')
+        }
+      ],
+      created_at: new Date('2025-11-20T09:00:00Z'),
+      updated_at: new Date('2025-11-21T15:30:00Z'),
+      archived_at: null
     }
   });
 });
@@ -26,37 +46,86 @@ router.get('/', (req, res) => {
     message: 'Get shopping lists',
     requestedBy: { id: req.user.id, name: req.user.name },
     data: [
-      { id: 'list1', name: 'Grocery Shopping', owner: 'user123' },
-      { id: 'list2', name: 'Hardware Store', owner: 'user123' }
+      {
+        _id: 'list1',
+        title: 'Grocery Shopping',
+        owner_id: req.user.id,
+        member_ids: [req.user.id, 'user456'],
+        items: [],
+        created_at: new Date('2025-11-20T09:00:00Z'),
+        updated_at: new Date('2025-11-20T09:00:00Z'),
+        archived_at: null
+      },
+      {
+        _id: 'list2',
+        title: 'Hardware Store',
+        owner_id: req.user.id,
+        member_ids: [req.user.id],
+        items: [],
+        created_at: new Date('2025-11-18T14:00:00Z'),
+        updated_at: new Date('2025-11-18T14:00:00Z'),
+        archived_at: null
+      }
     ]
   });
 });
 
 // Create shopping list
 router.post('/', (req, res) => {
-  res.json({
+  const { title } = req.body;
+
+  // Validate input
+  const validation = validateList({ title });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      errors: validation.errors
+    });
+  }
+
+  const now = new Date();
+  res.status(201).json({
     message: 'Create shopping list',
     requestedBy: { id: req.user.id, name: req.user.name },
     data: {
-      id: 'newlist123',
-      name: 'New Shopping List',
-      owner: req.user.id,
-      members: [],
-      items: []
+      _id: 'list_' + Date.now(),
+      title,
+      owner_id: req.user.id,
+      member_ids: [req.user.id],
+      items: [],
+      created_at: now,
+      updated_at: now,
+      archived_at: null
     }
   });
 });
 
 // Edit shopping list
 router.patch('/:listId', (req, res) => {
+  const { title, member_ids } = req.body;
+
+  // Validate input
+  const validation = validateListUpdate({ title, member_ids });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      errors: validation.errors
+    });
+  }
+
   res.json({
     message: 'Edit shopping list',
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      id: req.params.listId,
-      name: 'Updated List Name',
-      owner: 'user123'
+      _id: req.params.listId,
+      title: title || 'Updated List Name',
+      owner_id: 'user123',
+      member_ids: member_ids || ['user123', 'user456'],
+      items: [],
+      created_at: new Date('2025-11-20T09:00:00Z'),
+      updated_at: new Date(),
+      archived_at: null
     }
   });
 });
@@ -68,7 +137,14 @@ router.patch('/:listId/leave', (req, res) => {
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      success: true
+      _id: req.params.listId,
+      title: 'Some Shopping List',
+      owner_id: 'user123',
+      member_ids: ['user123'],
+      items: [],
+      created_at: new Date('2025-11-20T09:00:00Z'),
+      updated_at: new Date(),
+      archived_at: null
     }
   });
 });
@@ -80,62 +156,102 @@ router.patch('/:listId/archive', (req, res) => {
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      id: req.params.listId,
-      archived: true
+      _id: req.params.listId,
+      title: 'Archived Shopping List',
+      owner_id: req.user.id,
+      member_ids: [req.user.id],
+      items: [],
+      created_at: new Date('2025-11-20T09:00:00Z'),
+      updated_at: new Date(),
+      archived_at: new Date()
     }
   });
 });
 
 // Remove shopping list
 router.delete('/:listId/remove', (req, res) => {
-  res.json({
+  res.status(200).json({
     message: 'Remove shopping list',
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      success: true
+      success: true,
+      deletedId: req.params.listId
     }
   });
 });
 
 // Add item
 router.post('/:listId/item', (req, res) => {
-  res.json({
+  const { name, quantity } = req.body;
+
+  // Validate input
+  const validation = validateItem({ name, quantity: quantity || 1 });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      errors: validation.errors
+    });
+  }
+
+  const now = new Date();
+  res.status(201).json({
     message: 'Add item',
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
-      id: 'newitem123',
-      name: 'New Item',
-      purchased: false
+      _id: 'item_' + Date.now(),
+      name,
+      quantity: quantity || 1,
+      purchased_at: null,
+      created_by_user_id: req.user.id,
+      created_at: now,
+      updated_at: now
     }
   });
 });
 
 // Edit item
 router.patch('/:listId/item/:itemId', (req, res) => {
+  const { name, quantity, purchased } = req.body;
+
+  // Validate input
+  const validation = validateItemUpdate({ name, quantity, purchased });
+  if (!validation.isValid) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      errors: validation.errors
+    });
+  }
+
+  const now = new Date();
   res.json({
     message: 'Edit item',
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {
-      id: req.params.itemId,
-      name: 'Updated Item',
-      purchased: true
+      _id: req.params.itemId,
+      name: name || 'Updated Item',
+      quantity: quantity || 1,
+      purchased_at: purchased ? now : null,
+      created_by_user_id: 'user123',
+      created_at: new Date('2025-11-20T10:00:00Z'),
+      updated_at: now
     }
   });
 });
 
 // Remove item
 router.post('/:listId/item/remove/:itemId', (req, res) => {
-  res.json({
+  res.status(200).json({
     message: 'Remove item',
     requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {
-      success: true
+      success: true,
+      deletedItemId: req.params.itemId
     }
   });
 });
