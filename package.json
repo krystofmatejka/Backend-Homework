@@ -1,0 +1,26 @@
+{
+  "name": "backend-homework",
+  "version": "1.0.0",
+  "description": "Backend homework with MongoDB connection and Docker Compose setup",
+  "main": "connect-mongodb.js",
+  "scripts": {
+    "start": "node connect-mongodb.js",
+    "test-connection": "node connect-mongodb.js",
+    "dev": "nodemon connect-mongodb.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "keywords": ["mongodb", "nodejs", "backend", "database", "docker"],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "mongodb": "^7.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}

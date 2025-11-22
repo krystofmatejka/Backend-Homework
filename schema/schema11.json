@@ -1,0 +1,65 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Shopping List Application Schema",
+    "description": "User schema definition",
+    "version": "1.0.0",
+    "definitions": {
+        "ObjectId": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{24}$",
+            "description": "MongoDB ObjectId as 24-character hex string"
+        },
+        "User": {
+            "type": "object",
+            "title": "User",
+            "description": "Application user account",
+            "required": [
+                "name",
+                "email",
+                "is_active",
+                "created_at",
+                "updated_at"
+            ],
+            "properties": {
+                "id": {
+                    "$ref": "#/definitions/ObjectId",
+                    "description": "Unique user identifier"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "description": "User's full name"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 255,
+                    "description": "Unique email address for authentication"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 255,
+                    "description": "Hashed password (store hash, not plaintext!)"
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "description": "Whether the user account is active",
+                    "default": true
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Account creation timestamp"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last account update timestamp"
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}
