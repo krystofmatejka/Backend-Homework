@@ -5,6 +5,7 @@ const router = express.Router();
 router.get('/:listId', (req, res) => {
   res.json({
     message: 'Get shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       id: req.params.listId,
@@ -23,6 +24,7 @@ router.get('/:listId', (req, res) => {
 router.get('/', (req, res) => {
   res.json({
     message: 'Get shopping lists',
+    requestedBy: { id: req.user.id, name: req.user.name },
     data: [
       { id: 'list1', name: 'Grocery Shopping', owner: 'user123' },
       { id: 'list2', name: 'Hardware Store', owner: 'user123' }
@@ -34,10 +36,11 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   res.json({
     message: 'Create shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     data: {
       id: 'newlist123',
       name: 'New Shopping List',
-      owner: 'user123',
+      owner: req.user.id,
       members: [],
       items: []
     }
@@ -48,6 +51,7 @@ router.post('/', (req, res) => {
 router.patch('/:listId', (req, res) => {
   res.json({
     message: 'Edit shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       id: req.params.listId,
@@ -61,6 +65,7 @@ router.patch('/:listId', (req, res) => {
 router.patch('/:listId/leave', (req, res) => {
   res.json({
     message: 'Leave shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       success: true
@@ -72,6 +77,7 @@ router.patch('/:listId/leave', (req, res) => {
 router.patch('/:listId/archive', (req, res) => {
   res.json({
     message: 'Archive shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       id: req.params.listId,
@@ -84,6 +90,7 @@ router.patch('/:listId/archive', (req, res) => {
 router.delete('/:listId/remove', (req, res) => {
   res.json({
     message: 'Remove shopping list',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       success: true
@@ -95,6 +102,7 @@ router.delete('/:listId/remove', (req, res) => {
 router.post('/:listId/item', (req, res) => {
   res.json({
     message: 'Add item',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       id: 'newitem123',
@@ -108,6 +116,7 @@ router.post('/:listId/item', (req, res) => {
 router.patch('/:listId/item/:itemId', (req, res) => {
   res.json({
     message: 'Edit item',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {
@@ -122,6 +131,7 @@ router.patch('/:listId/item/:itemId', (req, res) => {
 router.post('/:listId/item/remove/:itemId', (req, res) => {
   res.json({
     message: 'Remove item',
+    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {

@@ -3,6 +3,7 @@ const router = express.Router();
 
 // Get user
 router.get('/:userId', (req, res) => {
+  console.log(req.user);
   res.json({
     message: 'Get user',
     userId: req.params.userId,
@@ -18,6 +19,7 @@ router.get('/:userId', (req, res) => {
 router.get('/', (req, res) => {
   res.json({
     message: 'Get users',
+    requestedBy: { id: req.user.id, name: req.user.name },
     data: [
       { id: '1', name: 'John Doe', email: 'john@example.com' },
       { id: '2', name: 'Jane Smith', email: 'jane@example.com' }
@@ -29,6 +31,7 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   res.json({
     message: 'Create user',
+    requestedBy: { id: req.user.id, name: req.user.name },
     data: {
       id: '123',
       name: 'New User',
