@@ -12,13 +12,20 @@
   "engines": {
     "node": ">=24.0.0"
   },
-  "keywords": ["mongodb", "nodejs", "backend", "database", "docker"],
+  "keywords": [
+    "mongodb",
+    "nodejs",
+    "backend",
+    "database",
+    "docker"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "mongodb": "^7.0.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^5.1.0",
+    "mongodb": "^7.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
