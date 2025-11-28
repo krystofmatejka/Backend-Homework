@@ -1,8 +1,7 @@
-// Hardcoded API keys with associated users
+// Hardcoded API keys with associated accounts
 const API_KEYS = {
-  'key-user1-abc123': { id: 'user1', name: 'John Doe' },
-  'key-user2-def456': { id: 'user2', name: 'Jane Smith' },
-  'key-user3-ghi789': { id: 'user3', name: 'Bob Johnson' }
+  'key-abc123': { id: '1', profile: 'Authorities' },
+  'key-def456': { id: '2', profile: 'Operatives' },
 };
 
 const authMiddleware = (req, res, next) => {
@@ -15,9 +14,9 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  const user = API_KEYS[apiKey];
+  const account = API_KEYS[apiKey];
 
-  if (!user) {
+  if (!account) {
     return res.status(401).json({
       error: 'Unauthorized',
       message: 'Invalid API key'
@@ -25,7 +24,7 @@ const authMiddleware = (req, res, next) => {
   }
 
   // Attach user to request object
-  req.user = user;
+  req.account = account;
   next();
 };
 
