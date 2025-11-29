@@ -7,7 +7,9 @@ const PROFILES = {
 const API_KEYS = {
   'key-abc123': { id: '1', profile: PROFILES.AUTHORITIES },
   'key-def456': { id: '2', profile: PROFILES.OPERATIVES },
-  'key-ghi789': { id: '3', profile: PROFILES.USERS }
+  'key-ghi789': { id: '3', profile: PROFILES.USERS },
+  'key-jkl012': { id: '4', profile: PROFILES.USERS },
+  'key-mno345': { id: '5', profile: PROFILES.USERS },
 };
 
 const authMiddleware = (req, res, next) => {
