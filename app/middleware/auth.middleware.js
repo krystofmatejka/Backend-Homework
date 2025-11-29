@@ -1,7 +1,13 @@
-// Hardcoded API keys with associated accounts
+const PROFILES = {
+  AUTHORITIES: 'Authorities',
+  OPERATIVES: 'Operatives',
+  USERS: 'Users'
+}
+
 const API_KEYS = {
-  'key-abc123': { id: '1', profile: 'Authorities' },
-  'key-def456': { id: '2', profile: 'Operatives' },
+  'key-abc123': { id: '1', profile: PROFILES.AUTHORITIES },
+  'key-def456': { id: '2', profile: PROFILES.OPERATIVES },
+  'key-ghi789': { id: '3', profile: PROFILES.USERS }
 };
 
 const authMiddleware = (req, res, next) => {
