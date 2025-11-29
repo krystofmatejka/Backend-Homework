@@ -6,7 +6,6 @@ const { validateList, validateItem, validateListUpdate, validateItemUpdate } = r
 router.get('/:listId', (req, res) => {
   res.json({
     message: 'Get shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       _id: req.params.listId,
@@ -44,7 +43,6 @@ router.get('/:listId', (req, res) => {
 router.get('/', (req, res) => {
   res.json({
     message: 'Get shopping lists',
-    requestedBy: { id: req.user.id, name: req.user.name },
     data: [
       {
         _id: 'list1',
@@ -86,7 +84,6 @@ router.post('/', (req, res) => {
   const now = new Date();
   res.status(201).json({
     message: 'Create shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     data: {
       _id: 'list_' + Date.now(),
       title,
@@ -115,7 +112,6 @@ router.patch('/:listId', (req, res) => {
 
   res.json({
     message: 'Edit shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       _id: req.params.listId,
@@ -153,7 +149,6 @@ router.patch('/:listId/leave', (req, res) => {
 router.patch('/:listId/archive', (req, res) => {
   res.json({
     message: 'Archive shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       _id: req.params.listId,
@@ -172,7 +167,6 @@ router.patch('/:listId/archive', (req, res) => {
 router.delete('/:listId/remove', (req, res) => {
   res.status(200).json({
     message: 'Remove shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       success: true,
@@ -197,7 +191,6 @@ router.post('/:listId/item', (req, res) => {
   const now = new Date();
   res.status(201).json({
     message: 'Add item',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     data: {
       _id: 'item_' + Date.now(),
@@ -227,7 +220,6 @@ router.patch('/:listId/item/:itemId', (req, res) => {
   const now = new Date();
   res.json({
     message: 'Edit item',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {
@@ -243,10 +235,9 @@ router.patch('/:listId/item/:itemId', (req, res) => {
 });
 
 // Remove item
-router.post('/:listId/item/remove/:itemId', (req, res) => {
+router.delete('/:listId/item/:itemId', (req, res) => {
   res.status(200).json({
     message: 'Remove item',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
     itemId: req.params.itemId,
     data: {

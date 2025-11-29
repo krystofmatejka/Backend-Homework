@@ -6,7 +6,6 @@ const { validateUser } = require('../utils/validation');
 router.get('/:userId', (req, res) => {
   res.json({
     message: 'Get user',
-    requestedBy: { id: req.user.id, name: req.user.name },
     userId: req.params.userId,
     data: {
       _id: req.params.userId,
@@ -23,7 +22,6 @@ router.get('/:userId', (req, res) => {
 router.get('/', (req, res) => {
   res.json({
     message: 'Get users',
-    requestedBy: { id: req.user.id, name: req.user.name },
     data: [
       {
         _id: 'user1',
