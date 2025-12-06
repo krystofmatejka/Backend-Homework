@@ -13,6 +13,11 @@ const API_KEYS = {
 };
 
 const authMiddleware = (req, res, next) => {
+  if (process.env.DISABLE_AUTH === 'true') {
+    console.warn('Authentication is disabled via DISABLE_AUTH=true');
+    return next();
+  }
+
   const apiKey = req.headers['x-api-key'];
 
   if (!apiKey) {
@@ -36,4 +41,4 @@ const authMiddleware = (req, res, next) => {
   next();
 };
 
-module.exports = authMiddleware;
+export default authMiddleware;

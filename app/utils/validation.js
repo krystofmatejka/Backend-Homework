@@ -96,7 +96,7 @@ const validateItemUpdate = (updateData) => {
   };
 };
 
-module.exports = {
+export {
   validateUser,
   validateList,
   validateItem,

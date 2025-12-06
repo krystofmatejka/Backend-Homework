@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { validateUser } from '../utils/validation.js';
+
 const router = express.Router();
-const { validateUser } = require('../utils/validation');
 
 // Get user
 router.get('/:userId', (req, res) => {
@@ -70,4 +71,4 @@ router.post('/', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

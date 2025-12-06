@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import { validateList, validateItem, validateListUpdate, validateItemUpdate } from '../utils/validation.js';
+
 const router = express.Router();
-const { validateList, validateItem, validateListUpdate, validateItemUpdate } = require('../utils/validation');
 
 // Get shopping list
 router.get('/:listId', (req, res) => {
@@ -247,4 +248,4 @@ router.delete('/:listId/item/:itemId', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;

@@ -1,7 +1,10 @@
-const express = require('express');
-const authMiddleware = require('./app/middleware/auth.middleware');
-const usersController = require('./app/users/users.controller');
-const listsController = require('./app/lists/lists.controller');
+import express from 'express';
+import dotenv from 'dotenv';
+import authMiddleware from './app/middleware/auth.middleware.js';
+import usersController from './app/users/users.controller.js';
+import listsController from './app/lists/lists.controller.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
