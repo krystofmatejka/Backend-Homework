@@ -99,7 +99,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create shopping list
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const { title } = req.body;
 
   // Validate input
@@ -112,18 +112,38 @@ router.post('/', (req, res) => {
   }
 
   const now = new Date();
+  const userId = req.account.id;
+  console.log('Authenticated user ID:', userId);
+
+  const mongodb = getDb();
+  const result = await mongodb.collection('shopping_lists').insertOne({
+    title,
+    owner_id: new ObjectId(userId),
+    member_ids: [],
+    items: [],
+    created_at: now,
+    updated_at: now,
+    archived_at: null
+  });
+
+  const lists = await mongodb.collection('shopping_lists').aggregate([
+    { $match: { _id: result.insertedId } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner_info'
+      }
+    },
+    { $unwind: '$owner_info' },
+  ]).toArray();
+
+  const createdList = lists[0];
+
   res.status(201).json({
     message: 'Create shopping list',
-    data: {
-      _id: 'list_' + Date.now(),
-      title,
-      owner_id: req.user.id,
-      member_ids: [req.user.id],
-      items: [],
-      created_at: now,
-      updated_at: now,
-      archived_at: null
-    }
+    data: createdList
   });
 });
 
