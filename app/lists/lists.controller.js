@@ -6,39 +6,47 @@ import { getDb } from '../lib/database.js';
 const router = express.Router();
 
 // Get shopping list
-router.get('/:listId', (req, res) => {
+router.get('/:listId', async (req, res) => {
+  const userId = req.account.id;
+  console.log('Authenticated user ID:', userId);
+
+  const listId = req.params.listId;
+  console.log('Requested list ID:', listId);
+
+  const mongodb = getDb();
+  const lists = await mongodb.collection('shopping_lists').aggregate([
+    { $match: { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner_info'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'member_ids',
+        foreignField: '_id',
+        as: 'member_info'
+      }
+    },
+    { $unwind: '$owner_info' },
+  ]).toArray();
+
+  const list = lists[0];
+  if (!list) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found'
+    });
+  }
+
   res.json({
     message: 'Get shopping list',
     listId: req.params.listId,
-    data: {
-      _id: req.params.listId,
-      title: 'Grocery Shopping',
-      owner_id: 'user123',
-      member_ids: ['user123', 'user456'],
-      items: [
-        {
-          _id: 'item1',
-          name: 'Milk',
-          quantity: 2,
-          purchased_at: null,
-          created_by_user_id: 'user123',
-          created_at: new Date('2025-11-20T10:00:00Z'),
-          updated_at: new Date('2025-11-20T10:00:00Z')
-        },
-        {
-          _id: 'item2',
-          name: 'Bread',
-          quantity: 1,
-          purchased_at: new Date('2025-11-21T15:30:00Z'),
-          created_by_user_id: 'user123',
-          created_at: new Date('2025-11-20T10:00:00Z'),
-          updated_at: new Date('2025-11-21T15:30:00Z')
-        }
-      ],
-      created_at: new Date('2025-11-20T09:00:00Z'),
-      updated_at: new Date('2025-11-21T15:30:00Z'),
-      archived_at: null
-    }
+    data: list
   });
 });
 
