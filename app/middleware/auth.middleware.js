@@ -37,7 +37,10 @@ const authMiddleware = (req, res, next) => {
   }
 
   // Attach user to request object
-  req.account = account;
+  req.account = {
+    id: account.id,
+    profile: account.profile
+  };
   next();
 };
 

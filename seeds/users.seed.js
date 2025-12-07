@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 dotenv.config();
 
-async function main() {
+async function usersSeeds() {
   const client = new MongoClient(process.env.MONGODB_URI);
 
   await client.connect();
@@ -60,7 +60,7 @@ async function main() {
   await client.close();
 }
 
-main().catch(err => {
+usersSeeds().catch(err => {
   console.error('Error seeding users:', err);
   process.exit(1);
 });

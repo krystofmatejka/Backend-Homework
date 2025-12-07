@@ -1,5 +1,7 @@
 import express from 'express';
+import { ObjectId } from 'mongodb';
 import { validateList, validateItem, validateListUpdate, validateItemUpdate } from '../utils/validation.js';
+import { getDb } from '../lib/database.js';
 
 const router = express.Router();
 
@@ -41,31 +43,50 @@ router.get('/:listId', (req, res) => {
 });
 
 // Get shopping lists
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  // mine | shared | all
+  const filter = req.query.filter || 'mine';
+
+  const myUserId = req.account.id;
+  console.log('Authenticated user ID:', myUserId);
+  console.log('Filter:', filter);
+
+  let filters = {}
+  if (filter === 'mine') {
+    filters = { owner_id: new ObjectId(myUserId) };
+  } else if (filter === 'shared') {
+    filters = { member_ids: new ObjectId(myUserId), owner_id: { $ne: new ObjectId(myUserId) } };
+  } else if (filter === 'all') {
+    filters = { $or: [{ owner_id: new ObjectId(myUserId) }, { member_ids: new ObjectId(myUserId) }] };
+  } else {
+    throw new Error('Invalid filter value. Valid values are: mine, shared, all.');
+  }
+
+  const mongodb = getDb();
+  const lists = await mongodb.collection('shopping_lists').aggregate([
+    { $match: filters },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner_info'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'member_ids',
+        foreignField: '_id',
+        as: 'member_info'
+      }
+    },
+    { $unwind: '$owner_info' },
+  ]).toArray();
+
   res.json({
     message: 'Get shopping lists',
-    data: [
-      {
-        _id: 'list1',
-        title: 'Grocery Shopping',
-        owner_id: req.user.id,
-        member_ids: [req.user.id, 'user456'],
-        items: [],
-        created_at: new Date('2025-11-20T09:00:00Z'),
-        updated_at: new Date('2025-11-20T09:00:00Z'),
-        archived_at: null
-      },
-      {
-        _id: 'list2',
-        title: 'Hardware Store',
-        owner_id: req.user.id,
-        member_ids: [req.user.id],
-        items: [],
-        created_at: new Date('2025-11-18T14:00:00Z'),
-        updated_at: new Date('2025-11-18T14:00:00Z'),
-        archived_at: null
-      }
-    ]
+    data: lists
   });
 });
 
