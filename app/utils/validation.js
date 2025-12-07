@@ -18,10 +18,6 @@ const validateUser = (userData) => {
     errors.push('Email must be a valid email address');
   }
 
-  if (!userData.password || typeof userData.password !== 'string' || userData.password.length < 6) {
-    errors.push('Password is required and must be at least 6 characters');
-  }
-
   return {
     isValid: errors.length === 0,
     errors

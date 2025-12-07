@@ -13,10 +13,6 @@ async function main() {
   console.log('Connecting to MongoDB...');
   // Middleware
   app.use(express.json());
-  //app.use((req, res, next) => {
-  //  req.mongodb = mongodb;
-  //  next();
-  //});
 
   // Routes
   app.get('/', (req, res) => {

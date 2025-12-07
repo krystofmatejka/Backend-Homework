@@ -1,22 +1,20 @@
 import express from 'express';
+import { ObjectId } from 'mongodb';
 import { validateUser } from '../utils/validation.js';
 import { getDb } from '../lib/database.js';
 
 const router = express.Router();
 
 // Get user
-router.get('/:userId', (req, res) => {
+router.get('/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  const mongodb = getDb();
+  const user = await mongodb.collection('users').findOne({ _id: new ObjectId(userId) });
+
   res.json({
     message: 'Get user',
-    userId: req.params.userId,
-    data: {
-      _id: req.params.userId,
-      name: 'John Doe',
-      email: 'john@example.com',
-      is_active: true,
-      created_at: new Date('2025-01-15T10:30:00Z'),
-      updated_at: new Date('2025-01-15T10:30:00Z')
-    }
+    data: user
   });
 });
 
@@ -32,11 +30,11 @@ router.get('/', async (req, res) => {
 });
 
 // Create user
-router.post('/', (req, res) => {
-  const { name, email, password } = req.body;
+router.post('/', async (req, res) => {
+  const { name, email } = req.body;
 
   // Validate input
-  const validation = validateUser({ name, email, password });
+  const validation = validateUser({ name, email });
   if (!validation.isValid) {
     return res.status(400).json({
       error: 'Validation failed',
@@ -44,16 +42,24 @@ router.post('/', (req, res) => {
     });
   }
 
+  const mongodb = getDb();
+
   const now = new Date();
+  const newUser = {
+    name,
+    email,
+    is_active: true,
+    created_at: now,
+    updated_at: now
+  }
+
+  const result = await mongodb.collection('users').insertOne(newUser);
+
   res.status(201).json({
     message: 'Create user',
     data: {
-      _id: 'newuser_' + Date.now(),
-      name,
-      email,
-      is_active: true,
-      created_at: now,
-      updated_at: now
+      _id: result.insertedId,
+      ...newUser,
     }
   });
 });
