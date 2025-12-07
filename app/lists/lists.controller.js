@@ -218,21 +218,52 @@ router.patch('/:listId', async (req, res) => {
 });
 
 // Leave shopping list
-router.patch('/:listId/leave', (req, res) => {
+router.patch('/:listId/leave', async (req, res) => {
+  const userId = req.account.id;
+  const mongodb = getDb();
+
+  const now = new Date();
+  const listId = req.params.listId;
+
+  const list = await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId), member_ids: new ObjectId(userId) });
+
+  if (!list) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you are not a member'
+    });
+  }
+
+  await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(listId) },
+    { $pull: { member_ids: new ObjectId(userId) }, $set: { updated_at: now } }
+  );
+
+  const lists = await mongodb.collection('shopping_lists').aggregate([
+    { $match: { _id: new ObjectId(req.params.listId) } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner_info'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'member_ids',
+        foreignField: '_id',
+        as: 'member_info'
+      }
+    },
+    { $unwind: '$owner_info' },
+  ]).toArray();
+
   res.json({
     message: 'Leave shopping list',
-    requestedBy: { id: req.user.id, name: req.user.name },
     listId: req.params.listId,
-    data: {
-      _id: req.params.listId,
-      title: 'Some Shopping List',
-      owner_id: 'user123',
-      member_ids: ['user123'],
-      items: [],
-      created_at: new Date('2025-11-20T09:00:00Z'),
-      updated_at: new Date(),
-      archived_at: null
-    }
+    data: lists[0]
   });
 });
 
