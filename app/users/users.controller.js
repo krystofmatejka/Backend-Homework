@@ -1,5 +1,6 @@
 import express from 'express';
 import { validateUser } from '../utils/validation.js';
+import { getDb } from '../lib/database.js';
 
 const router = express.Router();
 
@@ -20,27 +21,13 @@ router.get('/:userId', (req, res) => {
 });
 
 // Get users
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
+  const mongodb = getDb();
+  const users = await mongodb.collection('users').find().toArray();
+
   res.json({
     message: 'Get users',
-    data: [
-      {
-        _id: 'user1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        is_active: true,
-        created_at: new Date('2025-01-10T08:00:00Z'),
-        updated_at: new Date('2025-01-10T08:00:00Z')
-      },
-      {
-        _id: 'user2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        is_active: true,
-        created_at: new Date('2025-01-12T14:20:00Z'),
-        updated_at: new Date('2025-01-12T14:20:00Z')
-      }
-    ]
+    data: users
   });
 });
 
