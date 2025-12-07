@@ -148,7 +148,7 @@ router.post('/', async (req, res) => {
 });
 
 // Edit shopping list
-router.patch('/:listId', (req, res) => {
+router.patch('/:listId', async (req, res) => {
   const { title, member_ids } = req.body;
 
   // Validate input
@@ -160,19 +160,60 @@ router.patch('/:listId', (req, res) => {
     });
   }
 
+  const now = new Date();
+  const userId = req.account.id;
+  const mongodb = getDb();
+
+  const toUpdate = {};
+  if (title !== undefined) {
+    toUpdate.title = title;
+  }
+  if (member_ids !== undefined) {
+    toUpdate.member_ids = member_ids.map(id => new ObjectId(id));
+  }
+  toUpdate.updated_at = now;
+
+  const result = await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(req.params.listId), owner_id: new ObjectId(userId) },
+    {
+      $set: toUpdate
+    }
+  );
+
+  if (result.matchedCount === 0) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you are not the owner'
+    });
+  }
+
+  console.log('Update result:', result);
+
+  const lists = await mongodb.collection('shopping_lists').aggregate([
+    { $match: { _id: new ObjectId(req.params.listId) } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner_info'
+      }
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'member_ids',
+        foreignField: '_id',
+        as: 'member_info'
+      }
+    },
+    { $unwind: '$owner_info' },
+  ]).toArray();
+
   res.json({
     message: 'Edit shopping list',
     listId: req.params.listId,
-    data: {
-      _id: req.params.listId,
-      title: title || 'Updated List Name',
-      owner_id: 'user123',
-      member_ids: member_ids || ['user123', 'user456'],
-      items: [],
-      created_at: new Date('2025-11-20T09:00:00Z'),
-      updated_at: new Date(),
-      archived_at: null
-    }
+    data: lists[0]
   });
 });
 
