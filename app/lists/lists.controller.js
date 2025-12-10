@@ -296,10 +296,24 @@ router.patch('/:listId/archive', async (req, res) => {
 });
 
 // Remove shopping list
-router.delete('/:listId/remove', (req, res) => {
+router.delete('/:listId', async (req, res) => {
+  const userId = req.account.id;
+  const listId = req.params.listId;
+  const mongodb = getDb();
+  
+  const result = await mongodb.collection('shopping_lists').deleteOne({
+    _id: new ObjectId(listId), owner_id: new ObjectId(userId)
+  });
+
+  if (result.deletedCount === 0) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you are not the owner'
+    });
+  }
+
   res.status(200).json({
     message: 'Remove shopping list',
-    listId: req.params.listId,
     data: {
       success: true,
       deletedId: req.params.listId
