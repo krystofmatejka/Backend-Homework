@@ -343,6 +343,7 @@ router.post('/:listId/item', async (req, res) => {
     {
       $push: {
         items: {
+          _id: new ObjectId(),
           name,
           quantity: quantity ?? 1,
           purchased_at: null,
@@ -370,7 +371,10 @@ router.post('/:listId/item', async (req, res) => {
 });
 
 // Edit item
-router.patch('/:listId/item/:itemId', (req, res) => {
+router.patch('/:listId/item/:itemId', async (req, res) => {
+  const userId = req.account.id;
+  const listId = req.params.listId;
+  const itemId = req.params.itemId;
   const { name, quantity, purchased } = req.body;
 
   // Validate input
@@ -383,19 +387,36 @@ router.patch('/:listId/item/:itemId', (req, res) => {
   }
 
   const now = new Date();
+
+  const mongodb = getDb();
+  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    {
+        _id: new ObjectId(listId),
+        $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }],
+        'items._id': new ObjectId(itemId) },
+    {
+      $set: {
+        'items.$.name': name,
+        'items.$.quantity': quantity,
+        'items.$.purchased_at': purchased ? now : null,
+        'items.$.updated_at': now
+      }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!updatedList) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you do not have permission to edit items'
+    });
+  }
+
   res.json({
     message: 'Edit item',
     listId: req.params.listId,
     itemId: req.params.itemId,
-    data: {
-      _id: req.params.itemId,
-      name: name || 'Updated Item',
-      quantity: quantity || 1,
-      purchased_at: purchased ? now : null,
-      created_by_user_id: 'user123',
-      created_at: new Date('2025-11-20T10:00:00Z'),
-      updated_at: now
-    }
+    data: updatedList
   });
 });
 
