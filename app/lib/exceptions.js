@@ -6,10 +6,10 @@ export class NotFoundException extends Error {
   }
 }
 
-export class BadRequestException extends Error {
-  constructor(message) {
+export class ValidationFailed extends Error {
+  constructor(message, errors) {
     super(message);
-    this.name = "BadRequestException";
-    this.status = 400;
+    this.name = "ValidationFailed";
+    this.errors = errors;
   }
 }

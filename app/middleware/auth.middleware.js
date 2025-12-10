@@ -12,7 +12,7 @@ const API_KEYS = {
   'key-mno345': { id: '674e1a2b3c4d5e6f7a8b9c05', profile: PROFILES.USERS },
 };
 
-const authMiddleware = (req, res, next) => {
+export function authMiddleware(req, res, next) {
   if (process.env.DISABLE_AUTH === 'true') {
     console.warn('Authentication is disabled via DISABLE_AUTH=true');
     return next();
@@ -43,5 +43,3 @@ const authMiddleware = (req, res, next) => {
   };
   next();
 };
-
-export default authMiddleware;

@@ -1,5 +1,5 @@
 import express from 'express';
-import { validateUser } from './users.validation.js';
+import { parseCreateUserParams } from './users.validation.js';
 import { getUserById, getUsers, createUser } from './users.service.js';
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -34,16 +34,10 @@ router.get('/', async (req, res) => {
 
 // Create user
 router.post('/', async (req, res) => {
-  const { name, email } = req.body;
-
-  // Validate input
-  const validation = validateUser({ name, email });
-  if (!validation.isValid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      errors: validation.errors
-    });
-  }
+  const { name, email } = parseCreateUserParams()
+    .parseName(req.body.name)
+    .parseEmail(req.body.email)
+    .run();
 
   const result = await createUser(name, email);
 
