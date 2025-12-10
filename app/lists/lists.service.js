@@ -55,3 +55,50 @@ export async function getLists(filter, cursor, limit, userId) {
     }
   };
 }
+
+export async function createList(title, ownerId) {
+  const mongodb = getDb();
+  const now = new Date();
+
+  const newList = {
+    title,
+    owner_id: new ObjectId(ownerId),
+    member_ids: [],
+    items: [],
+    created_at: now,
+    updated_at: now,
+    archived_at: null
+  };
+
+  const result = await mongodb.collection('shopping_lists').insertOne(newList);
+
+  return {
+    _id: result.insertedId,
+    ...newList,
+  };
+}
+
+export async function updateList(listId, ownerId, title, member_ids) {
+  const mongodb = getDb();
+  const now = new Date();
+
+    const toUpdate = {};
+  if (title !== undefined) {
+    toUpdate.title = title;
+  }
+  if (member_ids !== undefined) {
+    toUpdate.member_ids = member_ids.map(id => new ObjectId(id));
+  }
+  toUpdate.updated_at = now;
+
+  const result = await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(listId), owner_id: new ObjectId(ownerId) },
+    { $set: toUpdate }
+  );
+
+  if (result.matchedCount === 0) {
+    throw new NotFound(`Shopping List ID ${listId} not found or you are not the owner.`);
+  }
+
+  return await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId) });
+}

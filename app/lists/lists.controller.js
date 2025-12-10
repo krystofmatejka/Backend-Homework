@@ -2,7 +2,8 @@ import express from 'express';
 import { ObjectId } from 'mongodb';
 import { validateList, validateItem, validateListUpdate, validateItemUpdate } from '../utils/validation.js';
 import { getDb } from '../lib/database.js';
-import { getListById, getLists } from './lists.service.js';
+import { getListById, getLists, createList, updateList } from './lists.service.js';
+import { parseListParams } from './lists.validation.js';
 
 const oneOf = (values, defaultValue, testedValue) => values.includes(testedValue) ? testedValue : defaultValue;
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -40,120 +41,32 @@ router.get('/', async (req, res) => {
 
 // Create shopping list
 router.post('/', async (req, res) => {
-  const { title } = req.body;
-
-  // Validate input
-  const validation = validateList({ title });
-  if (!validation.isValid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      errors: validation.errors
-    });
-  }
-
-  const now = new Date();
   const userId = req.account.id;
-  console.log('Authenticated user ID:', userId);
+  const { title } = parseListParams()
+    .parseTitle(req.body.title)
+    .run();
 
-  const mongodb = getDb();
-  const result = await mongodb.collection('shopping_lists').insertOne({
-    title,
-    owner_id: new ObjectId(userId),
-    member_ids: [],
-    items: [],
-    created_at: now,
-    updated_at: now,
-    archived_at: null
-  });
-
-  const lists = await mongodb.collection('shopping_lists').aggregate([
-    { $match: { _id: result.insertedId } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner_info'
-      }
-    },
-    { $unwind: '$owner_info' },
-  ]).toArray();
-
-  const createdList = lists[0];
+  const createdListId = await createList(title, userId);
 
   res.status(201).json({
     message: 'Create shopping list',
-    data: createdList
+    data: createdListId
   });
 });
 
 // Edit shopping list
 router.patch('/:listId', async (req, res) => {
-  const { title, member_ids } = req.body;
-
-  // Validate input
-  const validation = validateListUpdate({ title, member_ids });
-  if (!validation.isValid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      errors: validation.errors
-    });
-  }
-
-  const now = new Date();
   const userId = req.account.id;
-  const mongodb = getDb();
+  const { title, member_ids } = parseListParams()
+    .parseTitleOptional(req.body.title)
+    .parseMemberIdsOptional(req.body.member_ids)
+    .run();
 
-  const toUpdate = {};
-  if (title !== undefined) {
-    toUpdate.title = title;
-  }
-  if (member_ids !== undefined) {
-    toUpdate.member_ids = member_ids.map(id => new ObjectId(id));
-  }
-  toUpdate.updated_at = now;
-
-  const result = await mongodb.collection('shopping_lists').updateOne(
-    { _id: new ObjectId(req.params.listId), owner_id: new ObjectId(userId) },
-    {
-      $set: toUpdate
-    }
-  );
-
-  if (result.matchedCount === 0) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you are not the owner'
-    });
-  }
-
-  console.log('Update result:', result);
-
-  const lists = await mongodb.collection('shopping_lists').aggregate([
-    { $match: { _id: new ObjectId(req.params.listId) } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner_info'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'member_ids',
-        foreignField: '_id',
-        as: 'member_info'
-      }
-    },
-    { $unwind: '$owner_info' },
-  ]).toArray();
+  const updatedList = await updateList(req.params.listId, userId, title, member_ids);
 
   res.json({
     message: 'Edit shopping list',
-    listId: req.params.listId,
-    data: lists[0]
+    data: updatedList
   });
 });
 
