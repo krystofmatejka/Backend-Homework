@@ -5,6 +5,7 @@ import listsController from './app/lists/lists.controller.js';
 import { authMiddleware } from './app/middleware/auth.middleware.js';
 import { errorHandlerMiddleware } from './app/middleware/error-handler.middleware.js';
 import { usersSeed } from './app/users/users.seed.js';
+import { listsSeed } from './app/lists/lists.seed.js';
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ const PORT = 3000;
 if (process.env.ALWAYS_SEED === 'true') {
   console.log('Seeding users collection...');
   await usersSeed();
+  await listsSeed();
 }
 
 // JSON Middleware
