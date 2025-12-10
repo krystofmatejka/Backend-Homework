@@ -421,15 +421,30 @@ router.patch('/:listId/item/:itemId', async (req, res) => {
 });
 
 // Remove item
-router.delete('/:listId/item/:itemId', (req, res) => {
+router.delete('/:listId/item/:itemId', async (req, res) => {
+  const userId = req.account.id;
+  const listId = req.params.listId;
+  const itemId = req.params.itemId;
+
+  const mongodb = getDb();
+  const result = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] },
+    { $pull: { items: { _id: new ObjectId(itemId) } } },
+    { returnDocument: 'after' }
+  )
+
+  if (!result) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you do not have permission to remove items'
+    });
+  }
+
   res.status(200).json({
     message: 'Remove item',
     listId: req.params.listId,
     itemId: req.params.itemId,
-    data: {
-      success: true,
-      deletedItemId: req.params.itemId
-    }
+    data: result
   });
 });
 
