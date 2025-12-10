@@ -1,7 +1,8 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { validateUser } from '../utils/validation.js';
-import { getDb } from '../lib/database.js';
+import { validateUser } from './users.validation.js';
+import { getUserById, getUsers, createUser } from './users.service.js';
+
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 const router = express.Router();
 
@@ -9,8 +10,7 @@ const router = express.Router();
 router.get('/:userId', async (req, res) => {
   const userId = req.params.userId;
 
-  const mongodb = getDb();
-  const user = await mongodb.collection('users').findOne({ _id: new ObjectId(userId) });
+  const user = await getUserById(userId);
 
   res.json({
     message: 'Get user',
@@ -20,12 +20,15 @@ router.get('/:userId', async (req, res) => {
 
 // Get users
 router.get('/', async (req, res) => {
-  const mongodb = getDb();
-  const users = await mongodb.collection('users').find().toArray();
+  const cursor = req.query.cursor
+  const limit = clamp(parseInt(req.query.limit ?? '10'), 1, 10);
+
+  const usersPaginated = await getUsers(cursor, limit);
 
   res.json({
     message: 'Get users',
-    data: users
+    data: usersPaginated.users,
+    pagination: usersPaginated.pagination,
   });
 });
 
@@ -42,25 +45,11 @@ router.post('/', async (req, res) => {
     });
   }
 
-  const mongodb = getDb();
-
-  const now = new Date();
-  const newUser = {
-    name,
-    email,
-    is_active: true,
-    created_at: now,
-    updated_at: now
-  }
-
-  const result = await mongodb.collection('users').insertOne(newUser);
+  const result = await createUser(name, email);
 
   res.status(201).json({
     message: 'Create user',
-    data: {
-      _id: result.insertedId,
-      ...newUser,
-    }
+    data: result
   });
 });
 
