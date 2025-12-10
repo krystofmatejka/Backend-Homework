@@ -300,7 +300,7 @@ router.delete('/:listId', async (req, res) => {
   const userId = req.account.id;
   const listId = req.params.listId;
   const mongodb = getDb();
-  
+
   const result = await mongodb.collection('shopping_lists').deleteOne({
     _id: new ObjectId(listId), owner_id: new ObjectId(userId)
   });
@@ -322,7 +322,9 @@ router.delete('/:listId', async (req, res) => {
 });
 
 // Add item
-router.post('/:listId/item', (req, res) => {
+router.post('/:listId/item', async (req, res) => {
+  const userId = req.account.id;
+  const listId = req.params.listId;
   const { name, quantity } = req.body;
 
   // Validate input
@@ -335,18 +337,35 @@ router.post('/:listId/item', (req, res) => {
   }
 
   const now = new Date();
+  const mongodb = getDb();
+  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] },
+    {
+      $push: {
+        items: {
+          name,
+          quantity: quantity ?? 1,
+          purchased_at: null,
+          created_by_user_id: new ObjectId(userId),
+          created_at: now,
+          updated_at: now
+        }
+      }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!updatedList) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found or you do not have permission to add items'
+    });
+  }
+
   res.status(201).json({
     message: 'Add item',
     listId: req.params.listId,
-    data: {
-      _id: 'item_' + Date.now(),
-      name,
-      quantity: quantity || 1,
-      purchased_at: null,
-      created_by_user_id: req.user.id,
-      created_at: now,
-      updated_at: now
-    }
+    data: updatedList
   });
 });
 
