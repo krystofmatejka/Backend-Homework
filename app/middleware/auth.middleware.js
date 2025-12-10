@@ -5,11 +5,11 @@ const PROFILES = {
 }
 
 const API_KEYS = {
-  'key-abc123': { id: '1', profile: PROFILES.AUTHORITIES },
-  'key-def456': { id: '2', profile: PROFILES.OPERATIVES },
-  'key-ghi789': { id: '3', profile: PROFILES.USERS },
-  'key-jkl012': { id: '4', profile: PROFILES.USERS },
-  'key-mno345': { id: '5', profile: PROFILES.USERS },
+  'key-abc123': { id: '674e1a2b3c4d5e6f7a8b9c01', profile: PROFILES.AUTHORITIES },
+  'key-def456': { id: '674e1a2b3c4d5e6f7a8b9c02', profile: PROFILES.OPERATIVES },
+  'key-ghi789': { id: '674e1a2b3c4d5e6f7a8b9c03', profile: PROFILES.USERS },
+  'key-jkl012': { id: '674e1a2b3c4d5e6f7a8b9c04', profile: PROFILES.USERS },
+  'key-mno345': { id: '674e1a2b3c4d5e6f7a8b9c05', profile: PROFILES.USERS },
 };
 
 const authMiddleware = (req, res, next) => {

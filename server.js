@@ -1,9 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import authMiddleware from './app/middleware/auth.middleware.js';
-import userIdMiddleware from './app/middleware/user-id.middleware.js';
 import usersController from './app/users/users.controller.js';
 import listsController from './app/lists/lists.controller.js';
+import { usersSeed } from './app/users/users.seed.js';
 
 dotenv.config();
 
@@ -11,8 +11,12 @@ const app = express();
 const PORT = 3000;
 
 async function main() {
-  console.log('Connecting to MongoDB...');
-  // Middleware
+  if (process.env.ALWAYS_SEED === 'true') {
+    console.log('Seeding users collection...');
+    await usersSeed();
+  }
+
+  // JSON Middleware
   app.use(express.json());
 
   // Routes
@@ -20,13 +24,10 @@ async function main() {
     res.send('It works!');
   });
 
-  if (process.env.AUTH_MIDDLEWARE === 'api-key') {
-    app.use(authMiddleware);
-  }
-  if (process.env.AUTH_MIDDLEWARE === 'user-id') {
-    app.use(userIdMiddleware);
-  }
+  // Auth Middleware
+  app.use(authMiddleware);
 
+  // API v1 Routes
   app.use('/api/v1/users', usersController);
   app.use('/api/v1/lists', listsController);
 
