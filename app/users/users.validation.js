@@ -1,4 +1,4 @@
-import { ValidationFailed } from '../lib/exceptions.js';
+import { ValidationFailed } from '../lib/errors.js';
 
 function validateEmail(email) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

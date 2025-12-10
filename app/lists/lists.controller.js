@@ -2,99 +2,39 @@ import express from 'express';
 import { ObjectId } from 'mongodb';
 import { validateList, validateItem, validateListUpdate, validateItemUpdate } from '../utils/validation.js';
 import { getDb } from '../lib/database.js';
+import { getListById, getLists } from './lists.service.js';
+
+const oneOf = (values, defaultValue, testedValue) => values.includes(testedValue) ? testedValue : defaultValue;
+const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 const router = express.Router();
 
 // Get shopping list
 router.get('/:listId', async (req, res) => {
   const userId = req.account.id;
-  console.log('Authenticated user ID:', userId);
-
   const listId = req.params.listId;
-  console.log('Requested list ID:', listId);
 
-  const mongodb = getDb();
-  const lists = await mongodb.collection('shopping_lists').aggregate([
-    { $match: { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner_info'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'member_ids',
-        foreignField: '_id',
-        as: 'member_info'
-      }
-    },
-    { $unwind: '$owner_info' },
-  ]).toArray();
-
-  const list = lists[0];
-  if (!list) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found'
-    });
-  }
+  const list = await getListById(listId, userId);
 
   res.json({
     message: 'Get shopping list',
-    listId: req.params.listId,
     data: list
   });
 });
 
 // Get shopping lists
 router.get('/', async (req, res) => {
-  // mine | shared | all
-  const filter = req.query.filter || 'mine';
+  const userId = req.account.id;
+  const filter = oneOf(['mine', 'shared', 'all'], 'all', req.query.filter);
+  const cursor = req.query.cursor;
+  const limit = clamp(parseInt(req.query.limit ?? '10'), 1, 10);
 
-  const myUserId = req.account.id;
-  console.log('Authenticated user ID:', myUserId);
-  console.log('Filter:', filter);
-
-  let filters = {}
-  if (filter === 'mine') {
-    filters = { owner_id: new ObjectId(myUserId) };
-  } else if (filter === 'shared') {
-    filters = { member_ids: new ObjectId(myUserId), owner_id: { $ne: new ObjectId(myUserId) } };
-  } else if (filter === 'all') {
-    filters = { $or: [{ owner_id: new ObjectId(myUserId) }, { member_ids: new ObjectId(myUserId) }] };
-  } else {
-    throw new Error('Invalid filter value. Valid values are: mine, shared, all.');
-  }
-
-  const mongodb = getDb();
-  const lists = await mongodb.collection('shopping_lists').aggregate([
-    { $match: filters },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner_info'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'member_ids',
-        foreignField: '_id',
-        as: 'member_info'
-      }
-    },
-    { $unwind: '$owner_info' },
-  ]).toArray();
+  const result = await getLists(filter, cursor, limit, userId);
 
   res.json({
     message: 'Get shopping lists',
-    data: lists
+    data: result.lists,
+    pagination: result.pagination,
   });
 });
 

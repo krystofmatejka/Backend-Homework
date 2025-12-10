@@ -1,13 +1,13 @@
 import { ObjectId } from 'mongodb';
 import { getDb } from '../lib/database.js';
-import { NotFoundException } from '../lib/exceptions.js';
+import { NotFound } from '../lib/errors.js';
 
 export async function getUserById(userId) {
   const mongodb = getDb();
   const user = await mongodb.collection('users').findOne({ _id: new ObjectId(userId) });
 
   if (!user) {
-    throw new NotFoundException(`User with ID ${userId} not found`);
+    throw new NotFound(`User with ID ${userId} not found`);
   }
 
   return user;
