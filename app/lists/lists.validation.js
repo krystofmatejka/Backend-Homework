@@ -1,4 +1,4 @@
-import { parse } from "dotenv";
+import { ValidationFailed } from '../lib/errors.js';
 
 export function parseListParams() {
   const errors = [];
@@ -44,4 +44,76 @@ export function parseListParams() {
       }
     }
   }
+}
+
+export function parseItemParams() {
+  const errors = [];
+  let name = undefined;
+  let quantity = undefined;
+
+  return {
+    parseName(rawName) {
+      if (!rawName || typeof rawName !== 'string' || rawName.trim().length === 0) {
+        errors.push('Name is required and must be a non-empty string');
+      } else {
+        name = rawName;
+      }
+      return this;
+    },
+    parseQuantity(rawQuantity) {
+      const qty = rawQuantity ?? 1;
+      if (typeof qty !== 'number' || qty < 1) {
+        errors.push('Quantity must be a number greater than 0');
+      } else {
+        quantity = qty;
+      }
+      return this;
+    },
+    run() {
+      if (errors.length > 0) {
+        throw new ValidationFailed('Item validation failed', errors);
+      }
+      return { name, quantity };
+    }
+  };
+}
+
+export function parseItemUpdateParams() {
+  const errors = [];
+  let name = undefined;
+  let quantity = undefined;
+  let purchased = undefined;
+
+  return {
+    parseName(rawName) {
+      if (!rawName || typeof rawName !== 'string' || rawName.trim().length === 0) {
+        errors.push('Name is required and must be a non-empty string');
+      } else {
+        name = rawName;
+      }
+      return this;
+    },
+    parseQuantity(rawQuantity) {
+      if (typeof rawQuantity !== 'number' || rawQuantity < 1) {
+        errors.push('Quantity must be a number greater than 0');
+      } else {
+        quantity = rawQuantity;
+      }
+      return this;
+    },
+    parsePurchased(rawPurchased) {
+      if (typeof rawPurchased !== 'boolean') {
+        errors.push('Purchased must be a boolean');
+      } else {
+        purchased = rawPurchased;
+      }
+      return this;
+    },
+    run() {
+      if (errors.length > 0) {
+        throw new ValidationFailed('Item update validation failed', errors);
+      }
+      return { name, quantity, purchased };
+    }
+  };
 }

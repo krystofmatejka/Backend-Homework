@@ -102,3 +102,134 @@ export async function updateList(listId, ownerId, title, member_ids) {
 
   return await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId) });
 }
+
+export async function leaveList(listId, userId) {
+  const mongodb = getDb();
+  const now = new Date();
+
+  const list = await mongodb.collection('shopping_lists').findOne({ 
+    _id: new ObjectId(listId), 
+    member_ids: new ObjectId(userId) 
+  });
+
+  if (!list) {
+    throw new NotFound('Shopping list not found or you are not a member');
+  }
+
+  await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(listId) },
+    { $pull: { member_ids: new ObjectId(userId) }, $set: { updated_at: now } }
+  );
+
+  return await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId) });
+}
+
+export async function archiveList(listId, ownerId) {
+  const mongodb = getDb();
+  const now = new Date();
+
+  const result = await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(listId), owner_id: new ObjectId(ownerId), archived_at: null },
+    { $set: { archived_at: now, updated_at: now } }
+  );
+
+  if (result.matchedCount === 0) {
+    throw new NotFound('Shopping list not found, already archived, or you are not the owner');
+  }
+
+  return await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId) });
+}
+
+export async function deleteList(listId, ownerId) {
+  const mongodb = getDb();
+
+  const result = await mongodb.collection('shopping_lists').deleteOne({
+    _id: new ObjectId(listId), 
+    owner_id: new ObjectId(ownerId)
+  });
+
+  if (result.deletedCount === 0) {
+    throw new NotFound('Shopping list not found or you are not the owner');
+  }
+
+  return { success: true, deletedId: listId };
+}
+
+export async function addItem(listId, userId, name, quantity) {
+  const mongodb = getDb();
+  const now = new Date();
+
+  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    { 
+      _id: new ObjectId(listId), 
+      $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] 
+    },
+    {
+      $push: {
+        items: {
+          _id: new ObjectId(),
+          name,
+          quantity: quantity ?? 1,
+          purchased_at: null,
+          created_by_user_id: new ObjectId(userId),
+          created_at: now,
+          updated_at: now
+        }
+      }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!updatedList) {
+    throw new NotFound('Shopping list not found or you do not have permission to add items');
+  }
+
+  return updatedList;
+}
+
+export async function updateItem(listId, itemId, userId, name, quantity, purchased) {
+  const mongodb = getDb();
+  const now = new Date();
+
+  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    {
+      _id: new ObjectId(listId),
+      $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }],
+      'items._id': new ObjectId(itemId) 
+    },
+    {
+      $set: {
+        'items.$.name': name,
+        'items.$.quantity': quantity,
+        'items.$.purchased_at': purchased ? now : null,
+        'items.$.updated_at': now
+      }
+    },
+    { returnDocument: 'after' }
+  );
+
+  if (!updatedList) {
+    throw new NotFound('Shopping list not found or you do not have permission to edit items');
+  }
+
+  return updatedList;
+}
+
+export async function removeItem(listId, itemId, userId) {
+  const mongodb = getDb();
+
+  const result = await mongodb.collection('shopping_lists').findOneAndUpdate(
+    { 
+      _id: new ObjectId(listId), 
+      $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] 
+    },
+    { $pull: { items: { _id: new ObjectId(itemId) } } },
+    { returnDocument: 'after' }
+  );
+
+  if (!result) {
+    throw new NotFound('Shopping list not found or you do not have permission to remove items');
+  }
+
+  return result;
+}

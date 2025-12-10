@@ -1,9 +1,6 @@
 import express from 'express';
-import { ObjectId } from 'mongodb';
-import { validateList, validateItem, validateListUpdate, validateItemUpdate } from '../utils/validation.js';
-import { getDb } from '../lib/database.js';
-import { getListById, getLists, createList, updateList } from './lists.service.js';
-import { parseListParams } from './lists.validation.js';
+import { getListById, getLists, createList, updateList, leaveList, archiveList, deleteList, addItem, updateItem, removeItem } from './lists.service.js';
+import { parseListParams, parseItemParams, parseItemUpdateParams } from './lists.validation.js';
 
 const oneOf = (values, defaultValue, testedValue) => values.includes(testedValue) ? testedValue : defaultValue;
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
@@ -73,78 +70,28 @@ router.patch('/:listId', async (req, res) => {
 // Leave shopping list
 router.patch('/:listId/leave', async (req, res) => {
   const userId = req.account.id;
-  const mongodb = getDb();
-
-  const now = new Date();
   const listId = req.params.listId;
 
-  const list = await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId), member_ids: new ObjectId(userId) });
-
-  if (!list) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you are not a member'
-    });
-  }
-
-  await mongodb.collection('shopping_lists').updateOne(
-    { _id: new ObjectId(listId) },
-    { $pull: { member_ids: new ObjectId(userId) }, $set: { updated_at: now } }
-  );
-
-  const lists = await mongodb.collection('shopping_lists').aggregate([
-    { $match: { _id: new ObjectId(req.params.listId) } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner_info'
-      }
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'member_ids',
-        foreignField: '_id',
-        as: 'member_info'
-      }
-    },
-    { $unwind: '$owner_info' },
-  ]).toArray();
+  const updatedList = await leaveList(listId, userId);
 
   res.json({
     message: 'Leave shopping list',
     listId: req.params.listId,
-    data: lists[0]
+    data: updatedList
   });
 });
 
 // Archive shopping list
 router.patch('/:listId/archive', async (req, res) => {
   const userId = req.account.id;
-  const mongodb = getDb();
+  const listId = req.params.listId;
 
-  const now = new Date();
-
-  const updatedResult = await mongodb.collection('shopping_lists').updateOne(
-    { _id: new ObjectId(req.params.listId), owner_id: new ObjectId(userId), archived_at: null },
-    { $set: { archived_at: now, updated_at: now } }
-  )
-
-  if (updatedResult.matchedCount === 0) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found, already archived, or you are not the owner'
-    });
-  }
-
-  const list = await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(req.params.listId) });
+  const archivedList = await archiveList(listId, userId);
 
   res.json({
     message: 'Archive shopping list',
     listId: req.params.listId,
-    data: list
+    data: archivedList
   });
 });
 
@@ -152,25 +99,12 @@ router.patch('/:listId/archive', async (req, res) => {
 router.delete('/:listId', async (req, res) => {
   const userId = req.account.id;
   const listId = req.params.listId;
-  const mongodb = getDb();
 
-  const result = await mongodb.collection('shopping_lists').deleteOne({
-    _id: new ObjectId(listId), owner_id: new ObjectId(userId)
-  });
-
-  if (result.deletedCount === 0) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you are not the owner'
-    });
-  }
+  const result = await deleteList(listId, userId);
 
   res.status(200).json({
     message: 'Remove shopping list',
-    data: {
-      success: true,
-      deletedId: req.params.listId
-    }
+    data: result
   });
 });
 
@@ -178,47 +112,15 @@ router.delete('/:listId', async (req, res) => {
 router.post('/:listId/item', async (req, res) => {
   const userId = req.account.id;
   const listId = req.params.listId;
-  const { name, quantity } = req.body;
+  const { name, quantity } = parseItemParams()
+    .parseName(req.body.name)
+    .parseQuantity(req.body.quantity)
+    .run();
 
-  // Validate input
-  const validation = validateItem({ name, quantity: quantity || 1 });
-  if (!validation.isValid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      errors: validation.errors
-    });
-  }
-
-  const now = new Date();
-  const mongodb = getDb();
-  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
-    { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] },
-    {
-      $push: {
-        items: {
-          _id: new ObjectId(),
-          name,
-          quantity: quantity ?? 1,
-          purchased_at: null,
-          created_by_user_id: new ObjectId(userId),
-          created_at: now,
-          updated_at: now
-        }
-      }
-    },
-    { returnDocument: 'after' }
-  );
-
-  if (!updatedList) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you do not have permission to add items'
-    });
-  }
+  const updatedList = await addItem(listId, userId, name, quantity);
 
   res.status(201).json({
     message: 'Add item',
-    listId: req.params.listId,
     data: updatedList
   });
 });
@@ -228,47 +130,16 @@ router.patch('/:listId/item/:itemId', async (req, res) => {
   const userId = req.account.id;
   const listId = req.params.listId;
   const itemId = req.params.itemId;
-  const { name, quantity, purchased } = req.body;
+  const { name, quantity, purchased } = parseItemUpdateParams()
+    .parseName(req.body.name)
+    .parseQuantity(req.body.quantity)
+    .parsePurchased(req.body.purchased)
+    .run();
 
-  // Validate input
-  const validation = validateItemUpdate({ name, quantity, purchased });
-  if (!validation.isValid) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      errors: validation.errors
-    });
-  }
-
-  const now = new Date();
-
-  const mongodb = getDb();
-  const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
-    {
-        _id: new ObjectId(listId),
-        $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }],
-        'items._id': new ObjectId(itemId) },
-    {
-      $set: {
-        'items.$.name': name,
-        'items.$.quantity': quantity,
-        'items.$.purchased_at': purchased ? now : null,
-        'items.$.updated_at': now
-      }
-    },
-    { returnDocument: 'after' }
-  );
-
-  if (!updatedList) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you do not have permission to edit items'
-    });
-  }
+  const updatedList = await updateItem(listId, itemId, userId, name, quantity, purchased);
 
   res.json({
     message: 'Edit item',
-    listId: req.params.listId,
-    itemId: req.params.itemId,
     data: updatedList
   });
 });
@@ -279,25 +150,11 @@ router.delete('/:listId/item/:itemId', async (req, res) => {
   const listId = req.params.listId;
   const itemId = req.params.itemId;
 
-  const mongodb = getDb();
-  const result = await mongodb.collection('shopping_lists').findOneAndUpdate(
-    { _id: new ObjectId(listId), $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] },
-    { $pull: { items: { _id: new ObjectId(itemId) } } },
-    { returnDocument: 'after' }
-  )
-
-  if (!result) {
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Shopping list not found or you do not have permission to remove items'
-    });
-  }
+  const updatedList = await removeItem(listId, itemId, userId);
 
   res.status(200).json({
     message: 'Remove item',
-    listId: req.params.listId,
-    itemId: req.params.itemId,
-    data: result
+    data: updatedList
   });
 });
 
