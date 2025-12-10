@@ -268,20 +268,30 @@ router.patch('/:listId/leave', async (req, res) => {
 });
 
 // Archive shopping list
-router.patch('/:listId/archive', (req, res) => {
+router.patch('/:listId/archive', async (req, res) => {
+  const userId = req.account.id;
+  const mongodb = getDb();
+
+  const now = new Date();
+
+  const updatedResult = await mongodb.collection('shopping_lists').updateOne(
+    { _id: new ObjectId(req.params.listId), owner_id: new ObjectId(userId), archived_at: null },
+    { $set: { archived_at: now, updated_at: now } }
+  )
+
+  if (updatedResult.matchedCount === 0) {
+    return res.status(404).json({
+      error: 'Not Found',
+      message: 'Shopping list not found, already archived, or you are not the owner'
+    });
+  }
+
+  const list = await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(req.params.listId) });
+
   res.json({
     message: 'Archive shopping list',
     listId: req.params.listId,
-    data: {
-      _id: req.params.listId,
-      title: 'Archived Shopping List',
-      owner_id: req.user.id,
-      member_ids: [req.user.id],
-      items: [],
-      created_at: new Date('2025-11-20T09:00:00Z'),
-      updated_at: new Date(),
-      archived_at: new Date()
-    }
+    data: list
   });
 });
 
