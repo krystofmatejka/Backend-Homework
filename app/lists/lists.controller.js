@@ -76,7 +76,6 @@ router.patch('/:listId/leave', async (req, res) => {
 
   res.json({
     message: 'Leave shopping list',
-    listId: req.params.listId,
     data: updatedList
   });
 });
@@ -90,7 +89,6 @@ router.patch('/:listId/archive', async (req, res) => {
 
   res.json({
     message: 'Archive shopping list',
-    listId: req.params.listId,
     data: archivedList
   });
 });
