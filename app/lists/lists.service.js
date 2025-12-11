@@ -6,6 +6,7 @@ export async function getListById(listId, userId) {
   const mongodb = getDb();
   const list = await mongodb.collection('shopping_lists').findOne({
     _id: new ObjectId(listId),
+    archived_at: null,
     $or: [
       { owner_id: new ObjectId(userId) },
       { member_ids: new ObjectId(userId) },
@@ -22,13 +23,14 @@ export async function getListById(listId, userId) {
 export async function getLists(filter, cursor, limit, userId) {
   const mongodb = getDb();
 
-  let filters = {}
+  let filters = { archived_at: null };
   if (filter === 'mine') {
-    filters = { owner_id: new ObjectId(userId) };
+    filters.owner_id = new ObjectId(userId);
   } else if (filter === 'shared') {
-    filters = { member_ids: new ObjectId(userId), owner_id: { $ne: new ObjectId(userId) } };
+    filters.member_ids = new ObjectId(userId);
+    filters.owner_id = { $ne: new ObjectId(userId) };
   } else if (filter === 'all') {
-    filters = { $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] };
+    filters.$or = [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }];
   }
 
   if (cursor) {
@@ -109,11 +111,11 @@ export async function leaveList(listId, userId) {
 
   const list = await mongodb.collection('shopping_lists').findOne({ 
     _id: new ObjectId(listId), 
-    member_ids: new ObjectId(userId) 
+    member_ids: new ObjectId(userId),
   });
 
   if (!list) {
-    throw new NotFound('Shopping list not found or you are not a member');
+    throw new NotFound(`Shopping List ID ${listId} not found or you are not a member`);
   }
 
   await mongodb.collection('shopping_lists').updateOne(
@@ -134,7 +136,7 @@ export async function archiveList(listId, ownerId) {
   );
 
   if (result.matchedCount === 0) {
-    throw new NotFound('Shopping list not found, already archived, or you are not the owner');
+    throw new NotFound(`Shopping List ID ${listId} not found, already archived, or you are not the owner`);
   }
 
   return await mongodb.collection('shopping_lists').findOne({ _id: new ObjectId(listId) });
@@ -145,11 +147,11 @@ export async function deleteList(listId, ownerId) {
 
   const result = await mongodb.collection('shopping_lists').deleteOne({
     _id: new ObjectId(listId), 
-    owner_id: new ObjectId(ownerId)
+    owner_id: new ObjectId(ownerId),
   });
 
   if (result.deletedCount === 0) {
-    throw new NotFound('Shopping list not found or you are not the owner');
+    throw new NotFound(`Shopping List ID ${listId} not found or you are not the owner`);
   }
 
   return { success: true, deletedId: listId };
@@ -161,7 +163,8 @@ export async function addItem(listId, userId, name, quantity) {
 
   const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
     { 
-      _id: new ObjectId(listId), 
+      _id: new ObjectId(listId),
+      archived_at: null,
       $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] 
     },
     {
@@ -181,7 +184,7 @@ export async function addItem(listId, userId, name, quantity) {
   );
 
   if (!updatedList) {
-    throw new NotFound('Shopping list not found or you do not have permission to add items');
+    throw new NotFound(`Shopping List ID ${listId} not found or you do not have permission to add items`);
   }
 
   return updatedList;
@@ -194,6 +197,7 @@ export async function updateItem(listId, itemId, userId, name, quantity, purchas
   const updatedList = await mongodb.collection('shopping_lists').findOneAndUpdate(
     {
       _id: new ObjectId(listId),
+      archived_at: null,
       $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }],
       'items._id': new ObjectId(itemId) 
     },
@@ -209,7 +213,7 @@ export async function updateItem(listId, itemId, userId, name, quantity, purchas
   );
 
   if (!updatedList) {
-    throw new NotFound('Shopping list not found or you do not have permission to edit items');
+    throw new NotFound(`Shopping List ID ${listId} or Item ID ${itemId} not found or you do not have permission to edit items`);
   }
 
   return updatedList;
@@ -220,7 +224,8 @@ export async function removeItem(listId, itemId, userId) {
 
   const result = await mongodb.collection('shopping_lists').findOneAndUpdate(
     { 
-      _id: new ObjectId(listId), 
+      _id: new ObjectId(listId),
+      archived_at: null,
       $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] 
     },
     { $pull: { items: { _id: new ObjectId(itemId) } } },
@@ -228,7 +233,7 @@ export async function removeItem(listId, itemId, userId) {
   );
 
   if (!result) {
-    throw new NotFound('Shopping list not found or you do not have permission to remove items');
+    throw new NotFound(`Shopping List ID ${listId} or Item ID ${itemId} not found or you do not have permission to remove items`);
   }
 
   return result;
