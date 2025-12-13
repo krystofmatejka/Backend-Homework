@@ -199,7 +199,7 @@ export async function updateItem(listId, itemId, userId, name, quantity, purchas
       _id: new ObjectId(listId),
       archived_at: null,
       $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }],
-      'items._id': new ObjectId(itemId) 
+      'items.id': new ObjectId(itemId) 
     },
     {
       $set: {
@@ -228,7 +228,7 @@ export async function removeItem(listId, itemId, userId) {
       archived_at: null,
       $or: [{ owner_id: new ObjectId(userId) }, { member_ids: new ObjectId(userId) }] 
     },
-    { $pull: { items: { _id: new ObjectId(itemId) } } },
+    { $pull: { items: { id: new ObjectId(itemId) } } },
     { returnDocument: 'after' }
   );
 
