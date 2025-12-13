@@ -1,12 +1,24 @@
-const express = require('express');
-const authMiddleware = require('./app/middleware/auth.middleware');
-const usersController = require('./app/users/users.controller');
-const listsController = require('./app/lists/lists.controller');
+import express from 'express';
+import dotenv from 'dotenv';
+import usersController from './app/users/users.controller.js';
+import listsController from './app/lists/lists.controller.js';
+import { authMiddleware } from './app/middleware/auth.middleware.js';
+import { errorHandlerMiddleware } from './app/middleware/error-handler.middleware.js';
+import { usersSeed } from './app/users/users.seed.js';
+import { listsSeed } from './app/lists/lists.seed.js';
+
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
-// Middleware
+if (process.env.ALWAYS_SEED === 'true') {
+  console.log('Seeding users collection...');
+  await usersSeed();
+  await listsSeed();
+}
+
+// JSON Middleware
 app.use(express.json());
 
 // Routes
@@ -14,8 +26,15 @@ app.get('/', (req, res) => {
   res.send('It works!');
 });
 
-app.use('/api/v1/users', authMiddleware, usersController);
-app.use('/api/v1/lists', authMiddleware, listsController);
+// Auth Middleware
+app.use(authMiddleware);
+
+// API v1 Routes
+app.use('/api/v1/users', usersController);
+app.use('/api/v1/lists', listsController);
+
+// Global Error Handler Middleware
+app.use(errorHandlerMiddleware);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

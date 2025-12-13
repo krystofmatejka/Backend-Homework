@@ -1,0 +1,418 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: My first collection
+meta:
+  id: wrk_32d6d5194e424a9a9acff3ac10f0f6ed
+  created: 1765656039882
+  modified: 1765656039882
+  description: ""
+collection:
+  - url: http://localhost:3000/api/v1/users
+    name: Get Users
+    meta:
+      id: req_268e9fb366184f9cb4ceca1deb35a835
+      created: 1765656039892
+      modified: 1765658582694
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536688
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/users/674e1a2b3c4d5e6f7a8b9c01
+    name: Get User By ID
+    meta:
+      id: req_de8b47b1e4b843d18b684f7802788bb1
+      created: 1765656155878
+      modified: 1765658585512
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536638
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/users
+    name: Create User
+    meta:
+      id: req_1b48b72147a045529051433bd5e0d17f
+      created: 1765656505879
+      modified: 1765658591714
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536613
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"name": "Hugo",
+        	"email": "hugo@domain.com"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists
+    name: Get Shopping Lists
+    meta:
+      id: req_9485152fd3ab4af9b192cda5d91d4f95
+      created: 1765656791918
+      modified: 1765658595845
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536600.5
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d01
+    name: Get Shopping List By ID
+    meta:
+      id: req_842d7c54abc043b2839ad0dbc7996edc
+      created: 1765657280107
+      modified: 1765658599040
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536594.25
+    method: GET
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists
+    name: Create Shopping List
+    meta:
+      id: req_2070bc1dbb81447eb36a72625d789b3a
+      created: 1765657439750
+      modified: 1765658607334
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536591.125
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"title": "New List"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d01
+    name: Update Shopping List
+    meta:
+      id: req_61f83661f55d4b068da324e961658bf7
+      created: 1765657504347
+      modified: 1765658611840
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536589.5625
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"title": "Updated Title",
+        	"member_ids": ["674e1a2b3c4d5e6f7a8b9c02"]
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d02/leave
+    name: Leave Shopping List
+    meta:
+      id: req_193e7c6841be4f81a007dc653c36116d
+      created: 1765657664431
+      modified: 1765658618415
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588.7812
+    method: PATCH
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d06/archive
+    name: Archive Shopping List
+    meta:
+      id: req_efd6719acd23485184b428107e1f24bd
+      created: 1765657818116
+      modified: 1765658621740
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588.3906
+    method: PATCH
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d10
+    name: Delete Shopping List
+    meta:
+      id: req_3218d5e3fae942f8875145eb9432fb28
+      created: 1765657920301
+      modified: 1765658624830
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588.1953
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d01/item
+    name: Add Shopping List Item
+    meta:
+      id: req_30c94563a13e40ea93e8c5ebd8ef3445
+      created: 1765658067185
+      modified: 1765658627976
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588.0977
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"name": "Potato",
+        	"quantity": 10
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d01/item/674e1a2b3c4d5e6f7a8b9e01
+    name: Update Shopping List Item
+    meta:
+      id: req_5742e940221e4395802360934125bc47
+      created: 1765658163005
+      modified: 1765658631093
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588.0488
+    method: PATCH
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"name": "Vegan Milk",
+        	"quantity": 8,
+        	"purchased": false
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:3000/api/v1/lists/674e1a2b3c4d5e6f7a8b9d01/item/674e1a2b3c4d5e6f7a8b9e01
+    name: Remove Shopping List Item
+    meta:
+      id: req_1c141ca738ba48e6b8532fe742d23212
+      created: 1765658536588
+      modified: 1765658572523
+      isPrivate: false
+      description: ""
+      sortKey: -1765658536588
+    method: DELETE
+    headers:
+      - name: User-Agent
+        value: insomnia/12.1.0
+        description: ""
+        disabled: false
+      - name: x-api-key
+        value: key-abc123
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_d376d49be76ec48d5c56e96ce4f4acef05da7dea
+    created: 1765656039885
+    modified: 1765656039885
+environments:
+  name: Base Environment
+  meta:
+    id: env_d376d49be76ec48d5c56e96ce4f4acef05da7dea
+    created: 1765656039884
+    modified: 1765656039884
+    isPrivate: false
