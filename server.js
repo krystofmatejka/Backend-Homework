@@ -12,7 +12,9 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-if (process.env.ALWAYS_SEED === 'true') {
+// Only seed if running directly (not imported) and ALWAYS_SEED is true
+const isMainModule = import.meta.url === `file:///${process.argv[1].replace(/\\/g, '/')}`;
+if (isMainModule && process.env.ALWAYS_SEED === 'true') {
   console.log('Seeding users collection...');
   await usersSeed();
   await listsSeed();
@@ -36,6 +38,12 @@ app.use('/api/v1/lists', listsController);
 // Global Error Handler Middleware
 app.use(errorHandlerMiddleware);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Export app for testing
+export { app };
+
+// Only start server if this file is executed directly
+if (import.meta.url === `file:///${process.argv[1].replace(/\\/g, '/')}`) {
+  app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}
