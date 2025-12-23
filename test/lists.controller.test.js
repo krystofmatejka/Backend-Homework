@@ -10,15 +10,12 @@ dotenv.config();
 const originalDbName = process.env.MONGO_INITDB_DATABASE;
 process.env.MONGO_INITDB_DATABASE = `${originalDbName}_test`;
 
-// Now import modules that use the database
-const express = (await import('express')).default;
-const { default: listsController } = await import('../app/lists/lists.controller.js');
-const { errorHandlerMiddleware } = await import('../app/middleware/error-handler.middleware.js');
+// Import app and database modules
+const { app } = await import('../server.js');
 const { getDb, getClient } = await import('../app/lib/database.js');
 
 // Test server setup
 const TEST_PORT = 3002;
-let app;
 let server;
 let mongodb;
 
@@ -37,18 +34,7 @@ before(async () => {
   // Get the already connected database instance
   mongodb = getDb();
   
-  // Setup Express app with auth middleware
-  app = express();
-  app.use(express.json());
-  
-  // Add auth middleware
-  const { authMiddleware } = await import('../app/middleware/auth.middleware.js');
-  app.use(authMiddleware);
-  
-  app.use('/api/v1/lists', listsController);
-  app.use(errorHandlerMiddleware);
-  
-  // Start server
+  // Start server with imported app
   await new Promise((resolve) => {
     server = app.listen(TEST_PORT, resolve);
   });

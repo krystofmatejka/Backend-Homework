@@ -10,19 +10,19 @@ dotenv.config();
 const originalDbName = process.env.MONGO_INITDB_DATABASE;
 process.env.MONGO_INITDB_DATABASE = `${originalDbName}_test`;
 
-// Now import modules that use the database
-const express = (await import('express')).default;
-const { default: usersController } = await import('../app/users/users.controller.js');
-const { errorHandlerMiddleware } = await import('../app/middleware/error-handler.middleware.js');
+// Import app and database modules
+const { app } = await import('../server.js');
 const { getDb, getClient } = await import('../app/lib/database.js');
 
 // Test server setup
 const TEST_PORT = 3001;
-let app;
 let server;
 let mongodb;
 
 const BASE_URL = `http://localhost:${TEST_PORT}`;
+
+// Test API key for non-protected routes (users don't require specific user context)
+const TEST_API_KEY = 'key-ghi789';
 
 // Setup test server
 before(async () => {
@@ -31,13 +31,7 @@ before(async () => {
   // Get the already connected database instance
   mongodb = getDb();
   
-  // Setup Express app
-  app = express();
-  app.use(express.json());
-  app.use('/api/v1/users', usersController);
-  app.use(errorHandlerMiddleware);
-  
-  // Start server
+  // Start server with imported app
   await new Promise((resolve) => {
     server = app.listen(TEST_PORT, resolve);
   });
@@ -77,7 +71,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -105,7 +102,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -124,7 +124,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -143,7 +146,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -161,7 +167,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -179,7 +188,10 @@ describe('Users Controller', () => {
 
       const response = await fetch(`${BASE_URL}/api/v1/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': TEST_API_KEY
+        },
         body: JSON.stringify(userData)
       });
 
@@ -204,7 +216,9 @@ describe('Users Controller', () => {
       const userId = insertResult.insertedId.toString();
 
       // Test
-      const response = await fetch(`${BASE_URL}/api/v1/users/${userId}`);
+      const response = await fetch(`${BASE_URL}/api/v1/users/${userId}`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
 
       assert.strictEqual(response.status, 200);
       
@@ -218,7 +232,9 @@ describe('Users Controller', () => {
     it('should return 400 when user not found', async () => {
       const nonExistentId = new ObjectId().toString();
 
-      const response = await fetch(`${BASE_URL}/api/v1/users/${nonExistentId}`);
+      const response = await fetch(`${BASE_URL}/api/v1/users/${nonExistentId}`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
 
       assert.strictEqual(response.status, 400);
       
@@ -229,7 +245,9 @@ describe('Users Controller', () => {
     it('should return error for invalid ObjectId format', async () => {
       const invalidId = 'invalid-id-format';
 
-      const response = await fetch(`${BASE_URL}/api/v1/users/${invalidId}`);
+      const response = await fetch(`${BASE_URL}/api/v1/users/${invalidId}`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
 
       // This will throw an error from MongoDB, caught by error handler
       assert.strictEqual(response.status, 500);
@@ -249,7 +267,9 @@ describe('Users Controller', () => {
       await mongodb.collection('users').insertMany(users);
 
       // Test
-      const response = await fetch(`${BASE_URL}/api/v1/users`);
+      const response = await fetch(`${BASE_URL}/api/v1/users`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
 
       assert.strictEqual(response.status, 200);
       
@@ -274,7 +294,9 @@ describe('Users Controller', () => {
       await mongodb.collection('users').insertMany(users);
 
       // Test: Get first page
-      const response1 = await fetch(`${BASE_URL}/api/v1/users?limit=5`);
+      const response1 = await fetch(`${BASE_URL}/api/v1/users?limit=5`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result1 = await response1.json();
 
       assert.strictEqual(result1.data.length, 5);
@@ -283,7 +305,8 @@ describe('Users Controller', () => {
 
       // Test: Get second page
       const response2 = await fetch(
-        `${BASE_URL}/api/v1/users?limit=5&cursor=${result1.pagination.nextCursor}`
+        `${BASE_URL}/api/v1/users?limit=5&cursor=${result1.pagination.nextCursor}`,
+        { headers: { 'x-api-key': TEST_API_KEY } }
       );
       const result2 = await response2.json();
 
@@ -309,7 +332,9 @@ describe('Users Controller', () => {
       await mongodb.collection('users').insertMany(users);
 
       // Test with limit > 10
-      const response = await fetch(`${BASE_URL}/api/v1/users?limit=100`);
+      const response = await fetch(`${BASE_URL}/api/v1/users?limit=100`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result = await response.json();
 
       assert.strictEqual(result.data.length, 10);
@@ -328,14 +353,18 @@ describe('Users Controller', () => {
       await mongodb.collection('users').insertMany(users);
 
       // Test with limit < 1
-      const response = await fetch(`${BASE_URL}/api/v1/users?limit=0`);
+      const response = await fetch(`${BASE_URL}/api/v1/users?limit=0`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result = await response.json();
 
       assert.strictEqual(result.data.length, 1);
     });
 
     it('should return empty array when no users exist', async () => {
-      const response = await fetch(`${BASE_URL}/api/v1/users`);
+      const response = await fetch(`${BASE_URL}/api/v1/users`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result = await response.json();
 
       assert.strictEqual(result.data.length, 0);
@@ -354,14 +383,17 @@ describe('Users Controller', () => {
       await mongodb.collection('users').insertMany(users);
 
       // Page 1
-      const response1 = await fetch(`${BASE_URL}/api/v1/users?limit=5`);
+      const response1 = await fetch(`${BASE_URL}/api/v1/users?limit=5`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result1 = await response1.json();
       assert.strictEqual(result1.data.length, 5);
       assert.strictEqual(result1.pagination.hasNextPage, true);
 
       // Page 2
       const response2 = await fetch(
-        `${BASE_URL}/api/v1/users?limit=5&cursor=${result1.pagination.nextCursor}`
+        `${BASE_URL}/api/v1/users?limit=5&cursor=${result1.pagination.nextCursor}`,
+        { headers: { 'x-api-key': TEST_API_KEY } }
       );
       const result2 = await response2.json();
       assert.strictEqual(result2.data.length, 5);
@@ -369,7 +401,8 @@ describe('Users Controller', () => {
 
       // Page 3 (last page with 2 items)
       const response3 = await fetch(
-        `${BASE_URL}/api/v1/users?limit=5&cursor=${result2.pagination.nextCursor}`
+        `${BASE_URL}/api/v1/users?limit=5&cursor=${result2.pagination.nextCursor}`,
+        { headers: { 'x-api-key': TEST_API_KEY } }
       );
       const result3 = await response3.json();
       assert.strictEqual(result3.data.length, 2);
@@ -388,7 +421,9 @@ describe('Users Controller', () => {
       }));
       await mongodb.collection('users').insertMany(users);
 
-      const response = await fetch(`${BASE_URL}/api/v1/users`);
+      const response = await fetch(`${BASE_URL}/api/v1/users`, {
+        headers: { 'x-api-key': TEST_API_KEY }
+      });
       const result = await response.json();
 
       assert.strictEqual(result.data.length, 10);
