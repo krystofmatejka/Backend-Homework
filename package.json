@@ -5,10 +5,12 @@
   "main": "connect-mongodb.js",
   "scripts": {
     "dev": "node --watch-path app server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test test/**/*.test.js",
+    "test:watch": "node --test --watch test/**/*.test.js"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">=25.0.0"
   },
   "keywords": [
     "mongodb",

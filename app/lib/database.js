@@ -45,3 +45,4 @@ const mongodb = client.db(process.env.MONGO_INITDB_DATABASE);
 await initIndexes(mongodb);
 
 export const getDb = () => mongodb;
+export const getClient = () => client;
