@@ -1,5 +1,8 @@
 export function errorHandlerMiddleware(err, req, res, next) {
-  console.error('Global error handler:', err);
+  // Suppress error logging in test environment
+  if (process.env.NODE_ENV !== 'test' && !process.env.MONGO_INITDB_DATABASE?.includes('_test')) {
+    console.error('Global error handler:', err);
+  }
 
   if (err.name === 'ValidationFailed') {
     return res.status(400).json({
